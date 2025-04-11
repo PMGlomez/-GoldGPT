@@ -25,3 +25,7 @@ def status():
 @app.get("/daily-brief")
 def brief():
     return generate_daily_brief()
+
+@app.get("/status")
+def health_check():
+    return {"status": "ok"}

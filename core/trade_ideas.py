@@ -1,28 +1,30 @@
-
-import random
-from datetime import datetime, timedelta
 from polygon import RESTClient
+from datetime import datetime, timedelta
+import os
 
 def generate_trade_ideas():
+    client = RESTClient(api_key=os.getenv("POLYGON_API_KEY"))
     tickers = ["SPY", "AAPL", "MSFT", "NVDA"]
-    strategies = ["Breakout", "Reversal"]
-
-    # Prioritize SPY and set fixed expiration to next Friday
-    today = datetime.now()
-    next_expiration = today + timedelta(days=(4 - today.weekday()) % 7 + 1)
-
     ideas = []
-    for ticker in tickers:
-        idea = {
-            "ticker": ticker,
-            "strategy": random.choice(strategies),
-            "confidence": round(random.uniform(0.7, 0.95), 2),
-            "contract_type": "call",
-            "strike_price": round(random.uniform(95, 130), 1),
-            "expiration": next_expiration.strftime('%Y-%m-%d')
-        }
-        ideas.append(idea)
 
-    # Prioritize SPY to be the first idea
-    ideas.sort(key=lambda x: 0 if x["ticker"] == "SPY" else 1)
+    for ticker in tickers:
+        try:
+            today = datetime.now().date()
+            aggs = client.get_aggs(ticker, 1, "minute", today, today)
+            latest_price = aggs[-1].c if aggs else None
+            if latest_price:
+                strike = round(latest_price * 1.05, 2)
+                expiration = (datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d")
+                idea = {
+                    "ticker": ticker,
+                    "strategy": "Breakout",
+                    "confidence": 0.85,
+                    "contract_type": "call",
+                    "strike_price": strike,
+                    "expiration": expiration
+                }
+                ideas.append(idea)
+        except Exception as e:
+            print(f"Error fetching data for {ticker}: {e}")
+
     return ideas

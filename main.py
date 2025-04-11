@@ -26,6 +26,11 @@ def status():
 def brief():
     return generate_daily_brief()
 
-@app.get("/status")
-def health_check():
-    return {"status": "ok"}
+from core.realtime.websocket_stream import stream_polygon_ws
+from core.realtime.scheduler import run_scheduler
+import asyncio
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(stream_polygon_ws())
+    asyncio.create_task(run_scheduler())

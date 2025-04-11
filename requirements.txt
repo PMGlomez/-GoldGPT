@@ -1,4 +1,3 @@
-
 fastapi
 uvicorn
 polygon-api-client

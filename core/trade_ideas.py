@@ -1,39 +1,43 @@
+
 from polygon import RESTClient
 from datetime import datetime, timedelta
 import os
 
 def generate_trade_ideas():
     client = RESTClient(api_key=os.getenv("POLYGON_API_KEY"))
-    tickers = ["SPY", "AAPL", "MSFT", "NVDA"]
+    tickers = ["SPY", "QQQ", "AAPL", "MSFT", "NVDA"]
     ideas = []
 
-    today = datetime.now()
-    weekday = today.weekday()
-    market_day = today if weekday < 5 else today - timedelta(days=weekday - 4)
-
-    from_date = market_day.date()
-    to_date = market_day.date()
-
     for ticker in tickers:
-        try:
-            aggs = client.get_aggs(ticker, 1, "minute", from_date, to_date)
-            if not aggs:
-                continue
-            latest_price = aggs[-1].c
-            strike = round(latest_price * 1.05, 2)
-            expiration = (today + timedelta(days=7)).strftime("%Y-%m-%d")
-            idea = {
-                "ticker": ticker,
-                "strategy": "Breakout",
-                "confidence": 0.85,
-                "contract_type": "call",
-                "strike_price": strike,
-                "expiration": expiration
-            }
-            ideas.append(idea)
-        except Exception as e:
-            print(f"Error fetching data for {ticker}: {e}")
+        # === Base Logic: Fetch 15-min candles and indicators ===
+        # (This is where you'd normally pull VWAP, EMA, MACD, RSI from Polygon)
 
-    if not ideas:
-        return [{"message": "Market is closed or no data available — check back during market hours."}]
-    return ideas
+        # === Strategy 1: Momentum — Price > EMA + MACD positive ===
+        # (If strategy passes, add tag: "⚡ Momentum Setup")
+
+        # === Strategy 2: Mean Reversion — Price below VWAP or BB lower ===
+        # (If strategy passes, add tag: "🔁 Mean Reversion")
+
+        # === Strategy 3: VWAP Reclaim or ORB breakout (intraday pattern logic) ===
+
+        # === Strategy 4: Light Stat-Arb — e.g. SPY diverging from QQQ ===
+
+        # === Fallback Expiry Logic ===
+        # Try 0DTE contracts first. If not available or invalid, fallback to 3–5 day or 1 week
+
+        # === Option Contract Filtering ===
+        # Use delta 0.4–0.6, max premium $4.00, weekly options preferred
+
+        # === Trade Idea Example ===
+        idea = {
+            "ticker": ticker,
+            "option": f"{ticker} 0DTE $XXXC",
+            "entry": 3.25,
+            "stop": 1.63,
+            "target": 6.50,
+            "partial_exit": 5.00,
+            "confidence_tags": ["⚡ Momentum Setup", "🔁 Mean Reversion"]
+        }
+        ideas.append(idea)
+
+    return {"ideas": ideas}
